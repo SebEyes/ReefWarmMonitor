@@ -3,7 +3,7 @@
 **Mayotte Reef Temp Monitor** est une application web interactive construite avec [Shiny pour R](https://shiny.rstudio.com/). Elle est conçue pour visualiser les données environnementales de températures et de profondeur de sondes autour dans le lagon de l'île de Mayotte dans l'Océan indien.
 
 ## Accessibilité
-La version actuelle de l'application web est disponible en ligne à l'adresse [Mayotte Reef Temp Monitor](https://sebeyes.shinyapps.io/MayotteReefTempMonitor_V2-1-test/).
+La version actuelle de l'application web est disponible en ligne à l'adresse [Mayotte Reef Temp Monitor](https://sebeyes.shinyapps.io/MayotteReefTempMonitor_V2-2).
 
 ---
 

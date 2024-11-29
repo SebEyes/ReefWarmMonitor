@@ -141,123 +141,116 @@ ui <- fluidPage(
         )))
       )
     ),
-    tabPanel("Charger de nouvelles données", sidebarLayout(
-      # Sidebar panel for inputs
-      sidebarPanel(
-        div(
-          id = "data_upload",
-          
-          # Input: Select station
-          selectInput(
-            inputId = "station_new_data",
-            label = "Sélectionner la station",
-            choices = station_list
-          ),
-          
-          # Input: Select a file
-          fileInput(
-            "file1",
-            "Choisir le fichier CSV",
-            multiple = FALSE,
-            accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")
-          ),
-          tags$hr(),
-          fluidRow(
-            column(
-              3,
-              
-              # Input: Checkbox if file has header ----
-              checkboxInput("header", "En-tête", TRUE),
-              
-              # Input: Select separator ----
-              radioButtons(
-                "sep",
-                "Séparateur",
-                choices = c(
-                  "Virgule" = ",",
-                  "Point virgule" = ";",
-                  "Tabulation" = "\t"
-                ),
-                selected = ";"
-              ),
-              
-              # Input: Select Decimal ----
-              radioButtons(
-                "decimal",
-                "Séparateur de décimal",
-                choices = c("Point" = '.', "Virgule" = ","),
-                selected = ','
-              ),
+    tabPanel(
+      "Charger de nouvelles données",
+      sidebarLayout(
+        # Sidebar panel for inputs
+        sidebarPanel(
+          div(
+            id = "data_upload",
+            
+            # Input: Select station
+            selectInput(
+              inputId = "station_new_data",
+              label = "Sélectionner la station",
+              choices = station_list
             ),
             
-            column(
-              8,
-              uiOutput("ColumnSelector_time"),
-              uiOutput("ColumnSelector_temp"),
-              uiOutput("ColumnSelector_depth"),
-              uiOutput("depth_bar")
+            # Input: Select a file
+            fileInput(
+              "file1",
+              "Choisir le fichier CSV",
+              multiple = FALSE,
+              accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")
+            ),
+            tags$hr(),
+            fluidRow(
+              column(
+                3,
+                
+                # Input: Checkbox if file has header ----
+                checkboxInput("header", "En-tête", TRUE),
+                
+                # Input: Select separator ----
+                radioButtons(
+                  "sep",
+                  "Séparateur",
+                  choices = c(
+                    "Virgule" = ",",
+                    "Point virgule" = ";",
+                    "Tabulation" = "\t"
+                  ),
+                  selected = ";"
+                ),
+                
+                # Input: Select Decimal ----
+                radioButtons(
+                  "decimal",
+                  "Séparateur de décimal",
+                  choices = c("Point" = '.', "Virgule" = ","),
+                  selected = ','
+                ),
+              ),
+              
+              column(
+                8,
+                uiOutput("ColumnSelector_time"),
+                uiOutput("ColumnSelector_temp"),
+                uiOutput("ColumnSelector_depth"),
+                uiOutput("depth_bar")
+              )
+            ),
+            # Horizontal line ----
+            tags$hr(),
+            fluidRow(
+              actionButton(
+                inputId = "new_data_summary",
+                label = "Générer un résumé des données",
+                class = "btn-success"
+              ),
+              br(),
+              actionButton(inputId = "resetupload", label = "Réinitialiser"),
+              hr(),
+              downloadButton(outputId = "HDF_DB_download", label = "Télécharger une sauvegarde des données brutes"),
+              hr(),
+              actionButton(
+                inputId = "exit_button",
+                label = "Quitter l'application",
+                class = "btn-secondary"
+              )
             )
+          )
+        ),
+        
+        # Main panel for displaying outputs ----
+        mainPanel(
+          layout_columns(
+            card(full_screen = T, tableOutput("new_contents")),
+            card(full_screen = T, plotOutput("new_contents_graph"))
           ),
           # Horizontal line ----
           tags$hr(),
+          
+          # Output: Validation file
           fluidRow(
-            
-            actionButton(
-              inputId = "new_data_summary",
-              label = "Générer un résumé des données",
-              class = "btn-success"
-            ),
-            br(),
-            actionButton(inputId = "resetupload", label = "Réinitialiser"),
-            hr(),
-            downloadButton(outputId = "HDF_DB_download", label = "Télécharger une sauvegarde des données brutes"),
-            hr(),
-            actionButton(
-              inputId = "exit_button",
-              label = "Quitter l'application",
-              class = "btn-secondary"
-            )
+            uiOutput("double_check"),
+            uiOutput("new_data_validation"),
+            align = "center"
           )
         )
-      ),
-      
-      # Main panel for displaying outputs ----
-      mainPanel(
-        layout_columns(
-          card(full_screen = T, tableOutput("new_contents")),
-          card(full_screen = T, plotOutput("new_contents_graph"))
-        ),
-        # Horizontal line ----
-        tags$hr(),
-        
-        # Output: Validation file
-        fluidRow(
-          uiOutput("double_check"),
-          uiOutput("new_data_validation"),
-          align = "center"
-        )
       )
-    ))
+    )
   )
 )
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
-  
   # define temporary file location
   temp = tempfile()
   
   # Output download full dataset button
   output$HDF_DB_download <- downloadHandler(
-    filename = paste(
-      paste(
-        "SAVE_full_dataset_",
-        Sys.time(),
-        sep = ""
-      ),
-      ".h5",
-      sep = ""
-    ),
+    filename = paste(paste("SAVE_full_dataset_", Sys.time(), sep = ""), ".h5", sep = ""),
     content = function(fname) {
       file.copy("data/data_station.h5", fname)
     }
@@ -366,10 +359,12 @@ server <- function(input, output) {
     # Preview and download data
     
     dim_data = reactive({
-      paste("Les données à télécharger contiennent",
-            nrow(na.omit(data_temp())),
-            "enregsitrements",
-            sep = " ")
+      paste(
+        "Les données à télécharger contiennent",
+        nrow(na.omit(data_temp())),
+        "enregsitrements",
+        sep = " "
+      )
     })
     
     # Output summary table
@@ -408,7 +403,7 @@ server <- function(input, output) {
       }
     )
     
-
+    
     
     
     ## Display ACF
@@ -426,14 +421,13 @@ server <- function(input, output) {
   
   observe({
     req(input$file1)
-    
-    input_file$data <- read.csv(
+    try(input_file$data <- read.csv(
       input$file1$datapath,
       header = input$header,
       sep = input$sep,
       dec = input$decimal,
       na.strings = ""
-    )
+    ))
   })
   
   #Preview data
@@ -500,7 +494,6 @@ server <- function(input, output) {
   
   # Generate summary
   observeEvent(input$new_data_summary, {
-    
     selected_file = reactive({
       select(input_file$data, new_col_names())
     })
@@ -509,7 +502,9 @@ server <- function(input, output) {
     if (length(unique(new_col_names())) != 3) {
       showModal(modalDialog(
         title = "ERREUR",
-        tags$h3("Le nombre de colonnes et le nombre de variables ne correspondent pas !"),
+        tags$h3(
+          "Le nombre de colonnes et le nombre de variables ne correspondent pas !"
+        ),
         easyClose =  FALSE
       ))
     } else{
@@ -526,124 +521,143 @@ server <- function(input, output) {
       ## Round data to to digits
       new_data$Temperature = as.numeric(new_data$Temperature) %>% round(digits = 2)
       new_data$Depth = as.numeric(new_data$Depth) %>% round(digits = 2)
-      print(head(new_data))
+      #print(head(new_data))
       new_data = new_data[str_detect(rownames(new_data), "NA", negate = T), ]
-      print(tail(new_data))
+      #print(tail(new_data))
       
-      ## Round Hours and convert to time format
-      if (isTRUE(time_formatting(new_data))) {
+      
+      ## Security if decimal not correct (in this case, )
+      if (dim(na.omit(new_data))[1] == 0) {
         showModal(modalDialog(
           title = "ERREUR",
-          tags$h3("Veuillez vérifier la sélection des données !"),
+          tags$h3("Aucune données numériques détectées, veuillez vérifier la sélection du séparateur de décimales !"),
           easyClose = FALSE
         ))
+        
       } else{
-        new_data = time_formatting(new_data) %>% arrange(Time)
-        
-        ## Convert depth to meters
-        # 1 Bar = 10.1974 msw
-        # Remove 1 bar for atmospheric pressure
-        if (input$depth_bar) {
-          new_data$Depth = (new_data$Depth - 1) * 10.1974
+        ## Round Hours and convert to time format
+        if (isTRUE(time_formatting(new_data))) {
+          showModal(modalDialog(
+            title = "ERREUR",
+            tags$h3("Veuillez vérifier la sélection des données !"),
+            easyClose = FALSE
+          ))
+        } else{
+          new_data = time_formatting(new_data) %>% arrange(Time)
+          
+          ## Convert depth to meters
+          # 1 Bar = 10.1974 msw
+          # Remove 1 bar for atmospheric pressure
+          if (input$depth_bar) {
+            new_data$Depth = (new_data$Depth - 1) * 10.1974
+          }
+          
+          ## Plot data
+          output$new_contents_graph <- renderPlot({
+            graph_preview(new_data)
+          }, height = 750)
+          
+          ## Check outliers
+          temp_outliers = temperature_outliers_detection(dataframe = new_data,
+                                                         lim_inf = temp_min_expected,
+                                                         lim_sup = temp_max_expected)
+          
+          depth_outliers = depth_outliers_detection(dataframe = new_data,
+                                                    lim_inf = depth_min_expected,
+                                                    lim_sup = depth_max_expected)
+          
+          output$outlier_temp <- renderDataTable(temp_outliers)
+          output$outlier_depth <- renderDataTable(depth_outliers)
+          
+          ## Summary message
+          showModal(
+            modalDialog(
+              size = "l",
+              title = "Validation des données",
+              tags$h3(
+                "Veuillez vérifier le résumé des données avant la validation !"
+              ),
+              br(),
+              
+              # Generate a summary of the dataset
+              renderPrint({
+                summary(new_data)
+              }),
+              # Show outliers
+              if (nrow(depth_outliers) > 0) {
+                outliers_flag$value = TRUE
+                renderUI({
+                  tagList(
+                    tags$hr(),
+                    tags$h4(
+                      "Des valeurs aberrantes de profondeur sont détectées !"
+                    ),
+                    tags$h5(
+                      "La profondeur devrait être comprise entre 2 et 10 mètres"
+                    )
+                  )
+                })
+              },
+              if (nrow(depth_outliers) > 0) {
+                renderUI({
+                  dataTableOutput("outlier_depth")
+                })
+              },
+              
+              if (nrow(temp_outliers) > 0) {
+                outliers_flag$value = TRUE
+                renderUI({
+                  tagList(
+                    tags$hr(),
+                    tags$h4(
+                      "Des valeurs aberrantes de température sont détectées !"
+                    ),
+                    tags$h5(
+                      "La température devrait être comprise entre 25°C et 35°C"
+                    )
+                  )
+                })
+              },
+              if (nrow(temp_outliers) > 0) {
+                renderUI({
+                  dataTableOutput("outlier_temp")
+                })
+              },
+              renderUI(tags$hr()),
+              renderUI(renderPlot({
+                graph_preview(new_data)
+              })),
+              easyClose = FALSE,
+              footer = modalButton("Fermer le résumé")
+            )
+          )
+          
+          ## Button validation
+          output$double_check = renderUI({
+            checkboxInput(value = FALSE,
+                          inputId = "double_verification",
+                          label = "Les données sont vérifiées et prêtes à être importées")
+          })
+          
+          output$new_data_validation = renderUI({
+            actionButtonStyled(
+              inputId = "validation_button",
+              label = "AJOUTER LES DONNÉES",
+              btn_type = "button",
+              type = "success",
+              class = "btn-lg"
+            )
+          })
+          
         }
-        
-        ## Plot data
-        output$new_contents_graph <- renderPlot({
-          graph_preview(new_data)
-        }, height = 750)
-        
-        ## Check outliers
-        temp_outliers = temperature_outliers_detection(dataframe = new_data,
-                                                       lim_inf = temp_min_expected,
-                                                       lim_sup = temp_max_expected)
-        
-        depth_outliers = depth_outliers_detection(dataframe = new_data,
-                                                  lim_inf = depth_min_expected,
-                                                  lim_sup = depth_max_expected)
-        
-        output$outlier_temp <- renderDataTable(temp_outliers)
-        output$outlier_depth <- renderDataTable(depth_outliers)
-        
-        ## Summary message
-        showModal(
-          modalDialog(size = "l",
-            title = "Validation des données",
-            tags$h3("Veuillez vérifier le résumé des données avant la validation !"),
-            br(),
-            
-            # Generate a summary of the dataset
-            renderPrint({
-              summary(new_data)
-            }),
-            # Show outliers
-            if (nrow(depth_outliers) > 0) {
-              outliers_flag$value = TRUE
-              renderUI({
-                tagList(
-                  tags$hr(),
-                  tags$h4("Des valeurs aberrantes de profondeur sont détectées !"),
-                  tags$h5("La profondeur devrait être comprise entre 2 et 10 mètres")
-                )
-              })
-            },
-            if (nrow(depth_outliers) > 0) {
-              renderUI({
-                dataTableOutput("outlier_depth")
-              })
-            },
-            
-            if (nrow(temp_outliers) > 0) {
-              outliers_flag$value = TRUE
-              renderUI({
-                tagList(
-                  tags$hr(),
-                  tags$h4("Des valeurs aberrantes de température sont détectées !"),
-                  tags$h5("La température devrait être comprise entre 25°C et 35°C")
-                )
-              })
-            },
-            if (nrow(temp_outliers) > 0) {
-              renderUI({
-                dataTableOutput("outlier_temp")
-              })
-            },
-            renderUI(tags$hr()),
-            renderUI(renderPlot({
-              graph_preview(new_data)
-            })),
-            easyClose = FALSE,
-            footer = modalButton("Fermer le résumé")
-          )
-        )
-        
-        ## Button validation
-        output$double_check = renderUI({
-          checkboxInput(value = FALSE, inputId = "double_verification", label = "Les données sont vérifiées et prêtes à être importées")
-        })
-        
-        output$new_data_validation = renderUI({
-          actionButtonStyled(
-            inputId = "validation_button",
-            label = "AJOUTER LES DONNÉES",
-            btn_type = "button",
-            type = "success",
-            class = "btn-lg"
-          )
-        })
-        
       }
-
       # Save new data as temporary file
-      save(
-        new_data,
-        file = paste(temp, ".rda", sep = "")
-      )
+      save(new_data, file = paste(temp, ".rda", sep = ""))
     }
   })
   
   # Validation new data addition
   observeEvent(input$validation_button, {
-    
     ### Load the temporary new file
     load(paste(temp, ".rda", sep = ""))
     
@@ -664,35 +678,25 @@ server <- function(input, output) {
           )
         )
       } else{
-        
         ### Save the database => Download the previous hdf5 file
         click("HDF_DB_download")
         
         ### Write the new data in the current HDF5
         # rename columns
-        new_data = new_data %>% rename(
-          depth = Depth,
-          temperature = Temperature,
-          timestamp = Time
-        )
+        new_data = new_data %>% rename(depth = Depth,
+                                       temperature = Temperature,
+                                       timestamp = Time)
         new_data$station_name = input$station_selected
         # Merge previous data
         old_data = station_read(input$station_selected)
-        full_data = rbind(
-          old_data,
-          new_data
-        ) %>% rename(
-          temperature_c = temperature,
-        )
+        full_data = rbind(old_data, new_data) %>% rename(temperature_c = temperature, )
         full_data$timestamp = as.character(full_data$timestamp)
         full_data$timestamp = str_replace_all(full_data$timestamp, "-", "/")
         
         #write
-        station_write(
-          station_name = input$station_selected,
-          dataset = full_data
-        )
-
+        station_write(station_name = input$station_selected,
+                      dataset = full_data)
+        
         # Acknowledge
         showNotification("Nouvelles données ajoutées")
         removeModal()
@@ -704,7 +708,6 @@ server <- function(input, output) {
   })
   
   observeEvent(input$data_addition, {
-    
     ### Load the temporary new file
     load(paste(temp, ".rda", sep = ""))
     
@@ -713,28 +716,19 @@ server <- function(input, output) {
     
     ### Write the new data in the current HDF5
     # rename columns
-    new_data = new_data %>% rename(
-      depth = Depth,
-      temperature = Temperature,
-      timestamp = Time
-    )
+    new_data = new_data %>% rename(depth = Depth,
+                                   temperature = Temperature,
+                                   timestamp = Time)
     new_data$station_name = input$station_selected
     # Merge previous data
     old_data = station_read(input$station_selected)
-    full_data = rbind(
-      old_data,
-      new_data
-    ) %>% rename(
-      temperature_c = temperature,
-    )
+    full_data = rbind(old_data, new_data) %>% rename(temperature_c = temperature, )
     full_data$timestamp = as.character(full_data$timestamp)
     full_data$timestamp = str_replace_all(full_data$timestamp, "-", "/")
-
+    
     #write
-    station_write(
-      station_name = input$station_selected,
-      dataset = full_data
-    )
+    station_write(station_name = input$station_selected,
+                  dataset = full_data)
     
     # Acknowledge
     showNotification("Nouvelles données ajoutées")
