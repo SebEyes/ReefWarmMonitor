@@ -362,7 +362,7 @@ server <- function(input, output) {
       paste(
         "Les données à télécharger contiennent",
         nrow(na.omit(data_temp())),
-        "enregsitrements",
+        "enregistrements",
         sep = " "
       )
     })
@@ -686,15 +686,15 @@ server <- function(input, output) {
         new_data = new_data %>% rename(depth = Depth,
                                        temperature = Temperature,
                                        timestamp = Time)
-        new_data$station_name = input$station_selected
+        new_data$station_name = input$station_new_data
         # Merge previous data
-        old_data = station_read(input$station_selected)
+        old_data = station_read(input$station_new_data)
         full_data = rbind(old_data, new_data) %>% rename(temperature_c = temperature, )
         full_data$timestamp = as.character(full_data$timestamp)
         full_data$timestamp = str_replace_all(full_data$timestamp, "-", "/")
         
         #write
-        station_write(station_name = input$station_selected,
+        station_write(station_name = input$station_new_data,
                       dataset = full_data)
         
         # Acknowledge
@@ -719,15 +719,18 @@ server <- function(input, output) {
     new_data = new_data %>% rename(depth = Depth,
                                    temperature = Temperature,
                                    timestamp = Time)
-    new_data$station_name = input$station_selected
+    new_data$station_name = input$station_new_data
+    
+    print(unique(new_data$station_name))
+    
     # Merge previous data
-    old_data = station_read(input$station_selected)
+    old_data = station_read(input$station_new_data)
     full_data = rbind(old_data, new_data) %>% rename(temperature_c = temperature, )
     full_data$timestamp = as.character(full_data$timestamp)
     full_data$timestamp = str_replace_all(full_data$timestamp, "-", "/")
     
     #write
-    station_write(station_name = input$station_selected,
+    station_write(station_name = input$station_new_data,
                   dataset = full_data)
     
     # Acknowledge
