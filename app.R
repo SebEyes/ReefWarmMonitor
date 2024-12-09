@@ -42,6 +42,7 @@ source("code/code_dependencies/02-graph_display.R")
 source("code/code_dependencies/03-ACF_plot.R")
 source("code/code_dependencies/04-ui.R")
 source("code/code_dependencies/05-new_data_file_cleaning.R")
+source("code/code_dependencies/06-Data_addition_tracking.R")
 
 
 # Define UI for application
@@ -118,24 +119,23 @@ ui <- fluidPage(
         
         mainPanel(layout_column_wrap(height = "750px", card(
           full_screen = T, div(id = "data_display", tabsetPanel(
-            # Show a plot
-            tabPanel(title = "Série temporelle", plotOutput("temp_data")),
-            # Download data
-            
-            tabPanel(
+            tabPanel(# Show a plot
+              title = "Série temporelle",
+              plotOutput("temp_data")
+            ),
+            tabPanel(# Download data
               title = "Téléchargement des données",
-              
               verbatimTextOutput("df_preview"),
               hr(),
               textOutput(outputId = "dim_info"),
-              
               downloadButton(outputId = "data_download", label = "Télécharger les données")
             ),
             tabPanel(
               title = "Autocorrélation temporelle",
-              plotOutput("plot_acf", height = "650px"),
+              br(),
+              uiOutput("acf_explanation"),
               hr(),
-              uiOutput("acf_explanation")
+              plotOutput("plot_acf", height = "650px")
             )
           ))
         )))
@@ -223,7 +223,9 @@ ui <- fluidPage(
         ),
         
         # Main panel for displaying outputs ----
-        mainPanel(
+        mainPanel(tabsetPanel(
+          tabPanel(
+            "Prévisualisation des données",
           layout_columns(
             card(full_screen = T, tableOutput("new_contents")),
             card(full_screen = T, plotOutput("new_contents_graph"))
@@ -237,7 +239,28 @@ ui <- fluidPage(
             uiOutput("new_data_validation"),
             align = "center"
           )
-        )
+        ),
+        tabPanel(
+          "Historique des ajouts",
+          card(full_screen = T,
+               layout_columns(
+                 actionButton(
+                   inputId = "refresh_history",
+                   label = "Mise à jour historique",
+                   class = "btn-success"
+                 ),
+                 br(),
+                 actionButton(
+                   inputId = "remove_last_record",
+                   label = "Supprimer le dernier ajout",
+                   class = "btn-danger"
+                 )
+               ),
+               hr(),
+               tableOutput("historic")
+               
+               ))
+        ))
       )
     )
   )
@@ -245,12 +268,48 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
+  
+  ### Historic data addition
+  output$historic = renderTable({
+    read.csv(
+      "data/historic.csv",
+      sep = ";",
+      check.names = F
+    )
+  })
+  
+  observeEvent(input$remove_last_record,{
+    station_remove()
+    click("refresh_history")
+    showModal(
+        modalDialog(
+          title = "Suppression données",
+          tags$h3("Le dernier ajout à été correctement supprimé de la base de données."),
+          easyClose = T,
+          footer = modalButton("Fermer l'avertissement")
+      )
+    )
+  })
+  
+  observeEvent(input$refresh_history,{
+    output$historic = renderTable({
+      read.csv(
+        "data/historic.csv",
+        sep = ";",
+        check.names = F
+      )
+    })
+  })
+  
+  
+  
+  
   # define temporary file location
   temp = tempfile()
   
   # Output download full dataset button
   output$HDF_DB_download <- downloadHandler(
-    filename = paste(paste("SAVE_full_dataset_", Sys.time(), sep = ""), ".h5", sep = ""),
+    filename = paste(paste("SAVE_full_dataset_", format(Sys.time(), "%a %b %d %X %Y"), sep = ""), ".h5", sep = ""),
     content = function(fname) {
       file.copy("data/data_station.h5", fname)
     }
@@ -314,8 +373,8 @@ server <- function(input, output) {
       NULL
     })
     
-    start = as.POSIXct(paste(input$date_range[1], "00:00:00", sep = " "))
-    end = as.POSIXct(paste(input$date_range[2], "23:00:00", sep = " "))
+    start = as.POSIXct(paste(input$date_range[1], "00:00:00", sep = " "), tz = "CET")
+    end = as.POSIXct(paste(input$date_range[2], "23:00:00", sep = " "), tz = "CET")
     
     if (input$station_selected == "Toutes les stations") {
       for (station_selected in station_list) {
@@ -689,13 +748,17 @@ server <- function(input, output) {
         new_data$station_name = input$station_new_data
         # Merge previous data
         old_data = station_read(input$station_new_data)
-        full_data = rbind(old_data, new_data) %>% rename(temperature_c = temperature, )
+        full_data = rbind(old_data, new_data) %>% rename(temperature_c = temperature)
         full_data$timestamp = as.character(full_data$timestamp)
         full_data$timestamp = str_replace_all(full_data$timestamp, "-", "/")
         
         #write
         station_write(station_name = input$station_new_data,
                       dataset = full_data)
+        source("code/code_dependencies/00-read-write_HDF5.R")
+        
+        # Write history
+        data_history(file_data_added = new_data, flag_data = outliers_flag$value)
         
         # Acknowledge
         showNotification("Nouvelles données ajoutées")
@@ -725,13 +788,22 @@ server <- function(input, output) {
     
     # Merge previous data
     old_data = station_read(input$station_new_data)
-    full_data = rbind(old_data, new_data) %>% rename(temperature_c = temperature, )
+    full_data = rbind(old_data, new_data) %>% rename(temperature_c = temperature)
     full_data$timestamp = as.character(full_data$timestamp)
     full_data$timestamp = str_replace_all(full_data$timestamp, "-", "/")
     
+    print(summary(full_data))
+    print(tail(full_data))
+    
     #write
-    station_write(station_name = input$station_new_data,
-                  dataset = full_data)
+    station_write(
+      station_name = input$station_new_data,
+      dataset = full_data
+    )
+    source("code/code_dependencies/00-read-write_HDF5.R")
+    
+    # Write history
+    data_history(file_data_added = new_data, flag_data = outliers_flag$value)
     
     # Acknowledge
     showNotification("Nouvelles données ajoutées")

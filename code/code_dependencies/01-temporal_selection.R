@@ -43,7 +43,7 @@ temporal_selection = function(dataset, start, end, temporal_res){
       "01",
       sep = "/"
     )
-    temp_data$date = as.POSIXct(temp_data$date)
+    temp_data$date = as.POSIXct(temp_data$date, tz = "CET")
   }
   
   if (temporal_res == "annuel") {
@@ -66,7 +66,7 @@ temporal_selection = function(dataset, start, end, temporal_res){
       "01",
       sep = "/"
     )
-    temp_data$date = as.POSIXct(temp_data$date)
+    temp_data$date = as.POSIXct(temp_data$date, tz = "CET")
   }
   
   temp_data %>% unique() %>% ungroup() %>% relocate("date", .before = "station_name")
