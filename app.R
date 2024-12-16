@@ -486,7 +486,7 @@ server <- function(input, output) {
       sep = input$sep,
       dec = input$decimal,
       na.strings = ""
-    ))
+    ) %>% na.omit())
   })
   
   #Preview data
@@ -578,6 +578,8 @@ server <- function(input, output) {
       new_data = na.omit(tail_cleaning(new_data, "#"))
       
       ## Round data to to digits
+      new_data$Temperature = str_replace_all(new_data$Temperature, ",", ".")
+      
       new_data$Temperature = as.numeric(new_data$Temperature) %>% round(digits = 2)
       new_data$Depth = as.numeric(new_data$Depth) %>% round(digits = 2)
       #print(head(new_data))
