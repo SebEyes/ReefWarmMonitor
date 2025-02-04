@@ -6,3 +6,6 @@
 /rsconnect
 /docs/Logo
 /code/draft.R
+.toml
+.json
+.jl
