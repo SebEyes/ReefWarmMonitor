@@ -7,7 +7,7 @@ temporal_selection = function(dataset, start, end, temporal_res){
   dataset_selected$year_verbatim = year(dataset_selected$date)
   
   if (temporal_res == "quotidien") {
-    temp_data = dataset_selected %>% group_by(date) %>% summarize(
+    temp_data = dataset_selected %>% group_by(date) %>% reframe(
       station_name,
       min_depth = min(depth),
       max_depth = max(depth),
@@ -23,7 +23,7 @@ temporal_selection = function(dataset, start, end, temporal_res){
   }
   
   if (temporal_res == "mensuel") {
-    temp_data = dataset_selected %>% group_by(month_nb) %>% summarize(
+    temp_data = dataset_selected %>% group_by(month_nb) %>% reframe(
       station_name,
       year_verbatim,
       min_depth = min(depth),
@@ -47,7 +47,7 @@ temporal_selection = function(dataset, start, end, temporal_res){
   }
   
   if (temporal_res == "annuel") {
-    temp_data = dataset_selected %>% group_by(year_verbatim) %>% summarize(
+    temp_data = dataset_selected %>% group_by(year_verbatim) %>% reframe(
       station_name,
       min_depth = min(depth),
       max_depth = max(depth),

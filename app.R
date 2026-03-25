@@ -72,7 +72,11 @@ ui <- fluidPage(
             hr(),
             tags$h4("Information temporelles"),
             
-            dateRangeInput(inputId = "date_range", label = "Sélectionner la plage temporelle"),
+            dateRangeInput(
+              inputId = "date_range",
+              start = "2015-01-01",
+              label = "Sélectionner la plage temporelle"
+            ),
             selectInput(
               inputId = "temporal_res",
               label = "Sélectionner la résolution temporelle",
@@ -376,6 +380,8 @@ server <- function(input, output) {
     start = as.POSIXct(paste(input$date_range[1], "00:00:00", sep = " "), tz = "CET")
     end = as.POSIXct(paste(input$date_range[2], "23:00:00", sep = " "), tz = "CET")
     
+    print(input$date_range[1])
+    
     if (input$station_selected == "Toutes les stations") {
       for (station_selected in station_list) {
         print(station_selected)
@@ -394,6 +400,9 @@ server <- function(input, output) {
       }
       
     } else{
+      
+      print(input$station_selected)
+      
       data_station = temporal_selection(
         dataset = station_read(station_name = input$station_selected),
         start = start,
@@ -484,8 +493,8 @@ server <- function(input, output) {
       input$file1$datapath,
       header = input$header,
       sep = input$sep,
-      dec = input$decimal,
-      na.strings = ""
+      dec = input$decimal
+      #na.strings = ""
     ) %>% na.omit())
   })
   
@@ -558,7 +567,7 @@ server <- function(input, output) {
     })
     
     ## Security if duplicates colnames
-    if (length(unique(new_col_names())) != 3) {
+     if (length(unique(new_col_names())) != 3) {
       showModal(modalDialog(
         title = "ERREUR",
         tags$h3(
@@ -583,7 +592,9 @@ server <- function(input, output) {
       new_data$Temperature = as.numeric(new_data$Temperature) %>% round(digits = 2)
       new_data$Depth = as.numeric(new_data$Depth) %>% round(digits = 2)
       #print(head(new_data))
+      
       new_data = new_data[str_detect(rownames(new_data), "NA", negate = T), ]
+      
       #print(tail(new_data))
       
       
@@ -604,7 +615,7 @@ server <- function(input, output) {
             easyClose = FALSE
           ))
         } else{
-          new_data = time_formatting(new_data) %>% arrange(Time)
+          new_data = time_formatting(new_data) %>% arrange(Time) %>% na.omit()
           
           ## Convert depth to meters
           # 1 Bar = 10.1974 msw

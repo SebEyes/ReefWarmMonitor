@@ -4,11 +4,13 @@ require(dplyr)
 
 tail_cleaning = function(dataframe, character) {
   dataframe = dataframe[str_detect(dataframe$Time, pattern = character, negate = T), ]
-  dataframe[, !sapply(dataframe, function(col) all(is.na(col)))]
+  dataframe = dataframe[rowSums(is.na(dataframe)) != ncol(dataframe), ]
+  #dataframe[, !sapply(dataframe, function(col) all(is.na(col)))]
+  return(dataframe)
 }
 
 date_detection = function(values) {
-  max_value = max(values)
+  max_value = max(values, na.rm = TRUE)
   if (max_value > 31) {
     return("year")
   } else{
