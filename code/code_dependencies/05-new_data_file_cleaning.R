@@ -4,6 +4,7 @@ require(dplyr)
 
 tail_cleaning = function(dataframe, character) {
   dataframe[str_detect(dataframe$Time, pattern = character, negate = T), ]
+  dataframe[, !sapply(dataframe, function(col) all(is.na(col)))]
 }
 
 date_detection = function(values) {
